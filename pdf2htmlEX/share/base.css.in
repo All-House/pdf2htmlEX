@@ -204,4 +204,19 @@
   cursor: pointer;
 }
 
+.@CSS_INPUT_SIGNATURE_CN@ {
+  border: 1px dashed #999;
+  background-color: rgba(240, 240, 255, 0.3);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.@CSS_INPUT_SELECT_CN@ {
+  border: 1px solid #aaa;
+  background-color: rgba(255, 255, 255, 0.0);
+  box-sizing: border-box;
+  font-family: inherit;
+  padding: 0 2px;
+}
+
 /* Base CSS END */

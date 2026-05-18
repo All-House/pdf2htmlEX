@@ -1,0 +1,29 @@
+FROM debian:bookworm
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt update && apt install -y \
+    git curl wget make g++ pkg-config cmake \
+    autoconf automake libtool dpkg-dev           \
+    fontforge poppler-utils                      \
+    libpng-dev zlib1g-dev libfreetype6-dev       \
+    libjpeg-dev libopenjp2-7-dev                 \
+    libxml2-dev gettext jq
+
+WORKDIR /app
+
+# Copy the full repo (with our modifications) instead of cloning upstream
+COPY . /app/
+
+# Build using the repo's own scripts
+RUN sed -i 's/sudo //g' buildScripts/* && \
+    sed -i '/openjdk-8-jre-headless/d' buildScripts/getBuildToolsApt && \
+    ./buildScripts/buildInstallLocallyApt && \
+    apt purge -y \
+        git curl wget make g++ pkg-config cmake \
+        autoconf automake libtool dpkg-dev build-essential && \
+    apt autoremove -y && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/* /root/.cache
+
+ENTRYPOINT ["pdf2htmlEX"]
