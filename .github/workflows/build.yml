@@ -1,19 +1,46 @@
-name: Build the project
+name: Build and push pdf2htmlEX image
 
-on: [push]
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  GAR_REGISTRY: us-central1-docker.pkg.dev
+  GCP_PROJECT: all-core-479222
+  GAR_REPO: allcore
+  IMAGE_NAME: pdf2htmlex
 
 jobs:
-  build:
-    runs-on: ubuntu-22.04
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build project with APT
-        run: './buildScripts/buildInstallLocallyApt'
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          name: my-artifact
-          path: pdf2htmlEX/build
+          credentials_json: ${{ secrets.GCP_SA_KEY_ALLCORE }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.GAR_REGISTRY }} --quiet
+
+      - name: Build image
+        run: |
+          docker build \
+            -f docker/Dockerfile.dev \
+            -t ${{ env.GAR_REGISTRY }}/${{ env.GCP_PROJECT }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            -t ${{ env.GAR_REGISTRY }}/${{ env.GCP_PROJECT }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}:latest \
+            .
+
+      - name: Push image
+        run: |
+          docker push ${{ env.GAR_REGISTRY }}/${{ env.GCP_PROJECT }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ env.GCP_PROJECT }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}:latest
